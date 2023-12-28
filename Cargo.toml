@@ -1,0 +1,17 @@
+[package]
+name = "cudalis"
+version = "0.0.1"
+description = "Portable Python machine learning container build and run tool."
+authors = ["kerthical <121681466+kerthical@users.noreply.github.com>"]
+edition = "2021"
+
+[dependencies]
+bollard = "0.15.0"
+futures-util = "0.3.30"
+clap = { version = "4.4.11", features = ["derive"] }
+tokio = { version = "1.35.1", features = ["full"] }
+winapi = { version = "0.3.9", features = ["winerror"] }
+reqwest = { version = "0.11.23", features = ["json"] }
+serde = "1.0.193"
+serde_json = "1.0.108"
+sysinfo = "0.30.1"
