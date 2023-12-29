@@ -1,9 +1,11 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Enter the version (tag) to deploy'
+        required: true
 
 jobs:
   release:
@@ -74,3 +76,4 @@ jobs:
       - uses: softprops/action-gh-release@v1
         with:
           files: "cudalis-*"
+          tag_name: ${{ inputs.tag }}
