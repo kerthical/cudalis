@@ -25,18 +25,6 @@ jobs:
             bin: cudalis.exe
             name: cudalis-windows-arm.zip
 
-          - os_name: Linux x86_64
-            os: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            bin: cudalis
-            name: cudalis-linux-x86_64.zip
-          - os_name: Linux ARM
-            os: ubuntu-22.04
-            target: aarch64-unknown-linux-gnu
-            bin: cudalis
-            name: cudalis-linux-arm.zip
-
-
           - os_name: macOS x86_64
             os: macos-latest
             target: x86_64-apple-darwin
@@ -53,10 +41,6 @@ jobs:
       - run: |
           git config --global user.email "121681466+kerthical@users.noreply.github.com"
           git config --global user.name "kerthical"
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -y zip openssl libssl-dev openssl-dev openssl-devel
-        if: matrix.platform.os_name == 'Linux x86_64' || matrix.platform.os_name == 'Linux ARM'
       - uses: houseabsolute/actions-rust-cross@v0
         with:
           command: "build"
