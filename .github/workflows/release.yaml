@@ -53,11 +53,11 @@ jobs:
           cd target/${{ matrix.platform.target }}/release
           zip -r ${{ matrix.platform.name }} ${{ matrix.platform.bin }}
           cd -
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: cudalis-${{ matrix.platform.os_name }}
-          path: "cudalis-*"
+          path: target/${{ matrix.platform.target }}/release/${{ matrix.platform.name }}
       - uses: softprops/action-gh-release@v1
         with:
-          files: "cudalis-*"
+          files: target/${{ matrix.platform.target }}/release/${{ matrix.platform.name }}
           tag_name: ${{ inputs.tag }}
