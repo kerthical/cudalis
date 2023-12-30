@@ -53,7 +53,7 @@ jobs:
           if [ "${{ matrix.platform.os }}" = "windows-latest" ]; then
             7z a -tzip ${{ matrix.platform.name }} ${{ matrix.platform.bin }}
           else
-            tar -czf ${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+            zip ${{ matrix.platform.name }} ${{ matrix.platform.bin }}
           fi
           cd -
         shell: bash
@@ -78,11 +78,6 @@ jobs:
           files: |
             artifacts/*
           tag_name: ${{ github.event.inputs.tag }}
-          body: |
-            # Changelog
-            $(git log --pretty=format:"* %s" $(git describe --tags --abbrev=0)..HEAD)
-          draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 permissions:

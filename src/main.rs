@@ -293,7 +293,7 @@ async fn build_docker_image(pytorch_version: &PyTorchVersion) {
             cmd: Some(vec![
                 "bash",
                 "-c",
-                "curl https://pyenv.run | bash && echo 'export PATH=\"\\$HOME/.pyenv/bin:\\$PATH\"' >> ~/.bashrc",
+                "curl https://pyenv.run | bash && echo 'export PATH=\"$HOME/.pyenv/bin:$PATH\"' >> ~/.bashrc",
             ]),
             attach_stdout: Some(true),
             attach_stderr: Some(true),
