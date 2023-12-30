@@ -56,6 +56,7 @@ jobs:
             tar -czf ${{ matrix.platform.name }} ${{ matrix.platform.bin }}
           fi
           cd -
+        shell: bash
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform.name }}
@@ -66,22 +67,23 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.platform.name }}
-          path: target/${{ matrix.platform.target }}/release/${{ matrix.platform.name }}
-      - uses: softprops/action-gh-release@v1
+          path: artifacts
+          pattern: cudalis-*.zip
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v1softprops/action-gh-release@v1
         with:
-          files: target/${{ matrix.platform.target }}/release/${{ matrix.platform.name }}
+          files: |
+            artifacts/*
           tag_name: ${{ github.event.inputs.tag }}
           body: |
             # Changelog
-            $(git log --format="* %s" $(git describe --tags --abbrev=0)..HEAD)
+            $(git log --pretty=format:"* %s" $(git describe --tags --abbrev=0)..HEAD)
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 permissions:
   contents: write
