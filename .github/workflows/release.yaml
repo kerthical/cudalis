@@ -73,7 +73,7 @@ jobs:
           path: artifacts
           pattern: cudalis-*.zip
           merge-multiple: true
-      - uses: softprops/action-gh-release@v1softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v1
         with:
           files: |
             artifacts/*
