@@ -58,14 +58,14 @@ impl PyTorchVersion {
     }
 
     fn get_accelerator_full_version(&self) -> String {
-        return if self.accelerator == "cpu" {
+        if self.accelerator == "cpu" {
             "cpu".to_string()
         } else {
             let cuda_version = self.accelerator.replace("cu", "");
-            let major = cuda_version.chars().nth(0).unwrap();
-            let minor = cuda_version.chars().nth(1).unwrap();
+            let major = &cuda_version[0..2];
+            let minor = &cuda_version[2..3];
             format!("{}.{}", major, minor)
-        };
+        }
     }
 }
 
@@ -80,51 +80,23 @@ async fn get_pytorch_version() -> Option<PyTorchVersion> {
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
-        .arg(
-            Arg::new("python")
-                .short('p')
-                .long("python")
-                .value_name("VERSION"),
-        )
-        .arg(
-            Arg::new("torch")
-                .short('t')
-                .long("torch")
-                .value_name("VERSION"),
-        )
-        .arg(
-            Arg::new("cuda")
-                .short('c')
-                .long("cuda")
-                .value_name("VERSION"),
-        );
+        .arg(Arg::new("python").short('p').long("python").value_name("VERSION"))
+        .arg(Arg::new("torch").short('t').long("torch").value_name("VERSION"))
+        .arg(Arg::new("cuda").short('c').long("cuda").value_name("VERSION"));
     let matches = command.get_matches();
 
-    let python_version = matches
-        .get_one::<String>("python")
-        .map(|v| format_python_version(v));
+    let python_version = matches.get_one::<String>("python").map(|v| format_python_version(v));
     let torch_version = matches.get_one::<String>("torch").map(|v| v.to_string());
-    let mut cuda_version = matches
-        .get_one::<String>("cuda")
-        .map(|v| format_cuda_version(v));
+    let mut cuda_version = matches.get_one::<String>("cuda").map(|v| format_cuda_version(v));
 
     if cuda_version.is_none() && env::consts::OS == "macos" {
         cuda_version = Some("cpu".to_string());
     }
 
-    println!("[+] Resolving the PyTorch version with the following constraints:");
-    println!(
-        "    Python version: {}",
-        python_version.as_ref().unwrap_or(&"latest".to_string())
-    );
-    println!(
-        "    PyTorch version: {}",
-        torch_version.as_ref().unwrap_or(&"latest".to_string())
-    );
-    println!(
-        "    CUDA version: {}",
-        cuda_version.as_ref().unwrap_or(&"latest".to_string())
-    );
+    println!("[+] Resolving versions with the following constraints:");
+    println!("    Python version: {}", python_version.as_ref().unwrap_or(&"latest".to_string()));
+    println!("    PyTorch version: {}", torch_version.as_ref().unwrap_or(&"latest".to_string()));
+    println!("    CUDA version: {}", cuda_version.as_ref().unwrap_or(&"latest".to_string()));
     println!();
 
     let result = reqwest::get("https://download.pytorch.org/whl/torch_stable.html")
@@ -151,26 +123,10 @@ async fn get_pytorch_version() -> Option<PyTorchVersion> {
 }
 
 async fn build_docker_image(pytorch_version: &PyTorchVersion) {
-    println!("[+] Building the Docker image with the following constraints:");
-    println!(
-        "    Python version: {}",
-        pytorch_version.get_python_full_version()
-    );
-    println!("    PyTorch version: {}", pytorch_version.version);
-    println!(
-        "    CUDA version: {}",
-        pytorch_version.get_accelerator_full_version()
-    );
-    println!();
-
     let docker = Docker::connect_with_local_defaults().unwrap();
     let base_image_tag = if pytorch_version.accelerator == "cpu" {
         "ubuntu:22.04".to_string()
     } else {
-        println!(
-            "[+] Resolving docker image tag for CUDA version: {}",
-            pytorch_version.get_accelerator_full_version()
-        );
         let result: serde_json::Value = reqwest::get(&format!(
             "https://hub.docker.com/v2/repositories/nvidia/cuda/tags/?page_size=100&name={}",
             pytorch_version.get_accelerator_full_version()
@@ -181,19 +137,30 @@ async fn build_docker_image(pytorch_version: &PyTorchVersion) {
         .await
         .unwrap();
         let tags = result["results"].as_array().unwrap();
+
+        if tags.is_empty() {
+            panic!("No CUDA image found for version {}", pytorch_version.get_accelerator_full_version());
+        }
+
         let tag = tags
             .iter()
             .find(|t| {
-                t["name"]
-                    .as_str()
-                    .unwrap()
-                    .starts_with(&pytorch_version.get_accelerator_full_version())
+                let tag = t["name"].as_str().unwrap().to_string();
+
+                tag.starts_with(&pytorch_version.get_accelerator_full_version()) && tag.contains("ubuntu")
             })
-            .unwrap()["name"]
+            .expect("No CUDA image found for version")["name"]
             .as_str()
             .unwrap();
         format!("nvidia/cuda:{}", tag)
     };
+
+    println!("[+] Resolved versions below:");
+    println!("    Python version: {}", pytorch_version.get_python_full_version());
+    println!("    PyTorch version: {}", pytorch_version.version);
+    println!("    CUDA version: {}", pytorch_version.get_accelerator_full_version());
+    println!("    Base image: {}", base_image_tag);
+    println!();
 
     println!("[+] Pulling the base image: {}", base_image_tag);
     let stream = docker.create_image(
@@ -270,7 +237,7 @@ async fn build_docker_image(pytorch_version: &PyTorchVersion) {
             cmd: Some(vec![
                 "bash",
                 "-c",
-                "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y curl build-essential libffi-dev libssl-dev zlib1g-dev liblzma-dev libbz2-dev libreadline-dev libsqlite3-dev libopencv-dev tk-dev git",
+                "export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get upgrade -y && apt-get install -y curl build-essential libffi-dev libssl-dev zlib1g-dev liblzma-dev libbz2-dev libreadline-dev libsqlite3-dev libopencv-dev tk-dev git",
             ]),
             attach_stdout: Some(true),
             attach_stderr: Some(true),
@@ -279,28 +246,37 @@ async fn build_docker_image(pytorch_version: &PyTorchVersion) {
         },
     ).await.unwrap().id;
 
-    let stream = docker.start_exec(&id, Some(StartExecOptions {
-        detach: false,
-        ..Default::default()
-    })).await;
+    let stream = docker
+        .start_exec(
+            &id,
+            Some(StartExecOptions {
+                detach: false,
+                ..Default::default()
+            }),
+        )
+        .await;
 
     consume_stream(stream).await;
 
     println!("[+] Installing pyenv and Python");
-    let id = docker.create_exec(
-        "cudalis_setup",
-        CreateExecOptions {
-            cmd: Some(vec![
-                "bash",
-                "-c",
-                "curl https://pyenv.run | bash && echo 'export PATH=\"$HOME/.pyenv/bin:$HOME/.pyenv/shims:$PATH\"' >> ~/.bashrc",
-            ]),
-            attach_stdout: Some(true),
-            attach_stderr: Some(true),
-            tty: Some(true),
-            ..Default::default()
-        },
-    ).await.unwrap().id;
+    let id = docker
+        .create_exec(
+            "cudalis_setup",
+            CreateExecOptions {
+                cmd: Some(vec![
+                    "bash",
+                    "-c",
+                    "curl https://pyenv.run | bash && echo 'export PATH=\"$HOME/.pyenv/bin:$HOME/.pyenv/shims:$PATH\"' >> ~/.bashrc",
+                ]),
+                attach_stdout: Some(true),
+                attach_stderr: Some(true),
+                tty: Some(true),
+                ..Default::default()
+            },
+        )
+        .await
+        .unwrap()
+        .id;
 
     let stream = docker.start_exec(&id, None).await;
 
@@ -334,27 +310,34 @@ async fn build_docker_image(pytorch_version: &PyTorchVersion) {
     consume_stream(stream).await;
 
     println!("[+] Installing PyTorch");
-    let id = docker.create_exec(
-        "cudalis_setup",
-        CreateExecOptions {
-            cmd: Some(vec![
-                "bash",
-                "-c",
-                &format!("~/.pyenv/shims/pip install torch=={} -f https://download.pytorch.org/whl/{}", pytorch_version.version, pytorch_version.accelerator),
-            ]),
-            attach_stdout: Some(true),
-            attach_stderr: Some(true),
-            tty: Some(true),
-            ..Default::default()
-        },
-    ).await.unwrap().id;
+    let id = docker
+        .create_exec(
+            "cudalis_setup",
+            CreateExecOptions {
+                cmd: Some(vec![
+                    "bash",
+                    "-c",
+                    &format!(
+                        "~/.pyenv/shims/pip install torch=={} torchvision torchaudio -f https://download.pytorch.org/whl/{}",
+                        pytorch_version.version, pytorch_version.accelerator
+                    ),
+                ]),
+                attach_stdout: Some(true),
+                attach_stderr: Some(true),
+                tty: Some(true),
+                ..Default::default()
+            },
+        )
+        .await
+        .unwrap()
+        .id;
 
     let stream = docker.start_exec(&id, None).await;
 
     consume_stream(stream).await;
 
     let image_name = format!(
-        "cudalis:{}-pytorch{}-{}",
+        "cudalis:{}-{}-{}",
         pytorch_version.get_python_full_version(),
         pytorch_version.version,
         pytorch_version.get_accelerator_full_version()
@@ -369,6 +352,7 @@ async fn build_docker_image(pytorch_version: &PyTorchVersion) {
             },
             Config {
                 image: Some(base_image_tag.clone()),
+                healthcheck: None,
                 ..Default::default()
             },
         )
@@ -387,10 +371,7 @@ async fn build_docker_image(pytorch_version: &PyTorchVersion) {
         )
         .await
         .unwrap();
-    docker
-        .remove_image(base_image_tag.as_str(), None, None)
-        .await
-        .unwrap();
+    docker.remove_image(base_image_tag.as_str(), None, None).await.unwrap();
 
     println!("[+] Done! You can now use the image: {}", image_name);
 }
@@ -452,10 +433,7 @@ where
         .max_by(|a, b| version_extractor(a).cmp(version_extractor(b)))
         .map(|v| version_extractor(v).clone())
     {
-        versions
-            .into_iter()
-            .filter(|v| version_extractor(v) == &latest_version)
-            .collect()
+        versions.into_iter().filter(|v| version_extractor(v) == &latest_version).collect()
     } else {
         Vec::new()
     }
