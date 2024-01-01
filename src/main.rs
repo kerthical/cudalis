@@ -114,9 +114,13 @@ async fn get_pytorch_version() -> Option<PyTorchVersion> {
         .collect::<Vec<_>>();
 
     versions = filter_versions_by_os_and_arch(versions);
+    println!("[+] Found {} versions", versions.len());
     versions = filter_versions_by_specified_version(versions, python_version, |v| &v.python);
+    println!("[+] Found {} versions", versions.len());
     versions = filter_versions_by_specified_version(versions, torch_version, |v| &v.version);
+    println!("[+] Found {} versions", versions.len());
     versions = filter_versions_by_specified_version(versions, cuda_version, |v| &v.accelerator);
+    println!("[+] Found {} versions", versions.len());
 
     versions.sort_by(|a, b| a.version.cmp(&b.version));
 
@@ -432,14 +436,17 @@ where
     if let Some(specified_version) = specified_version {
         versions
             .into_iter()
-            .filter(|v| version_extractor(v) == &specified_version)
+            .filter(|v| version_extractor(v).contains(&specified_version))
             .collect()
     } else if let Some(latest_version) = versions
         .iter()
         .max_by(|a, b| version_extractor(a).cmp(version_extractor(b)))
         .map(|v| version_extractor(v).clone())
     {
-        versions.into_iter().filter(|v| version_extractor(v) == &latest_version).collect()
+        versions
+            .into_iter()
+            .filter(|v| version_extractor(v).contains(&latest_version))
+            .collect()
     } else {
         Vec::new()
     }
