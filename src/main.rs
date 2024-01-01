@@ -93,7 +93,7 @@ async fn main() {
         cuda_version = Some("cpu".to_string());
     }
 
-    println!("[+] Resolving versions with python {}, torch {}, and cuda {}...", python_version.as_ref().unwrap_or(&"latest".to_string()), torch_version.as_ref().unwrap_or(&"latest".to_string()), cuda_version.as_ref().unwrap_or(&"latest".to_string()));
+    println!("[+] Resolving versions with python {}, torch {}, and cuda {}", python_version.as_ref().unwrap_or(&"latest".to_string()), torch_version.as_ref().unwrap_or(&"latest".to_string()), cuda_version.as_ref().unwrap_or(&"latest".to_string()));
 
     let result = reqwest::get("https://download.pytorch.org/whl/torch_stable.html")
         .await
