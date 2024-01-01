@@ -114,13 +114,9 @@ async fn get_pytorch_version() -> Option<PyTorchVersion> {
         .collect::<Vec<_>>();
 
     versions = filter_versions_by_os_and_arch(versions);
-    println!("[+] Found {} versions", versions.len());
     versions = filter_versions_by_specified_version(versions, python_version, |v| &v.python);
-    println!("[+] Found {} versions", versions.len());
     versions = filter_versions_by_specified_version(versions, torch_version, |v| &v.version);
-    println!("[+] Found {} versions", versions.len());
     versions = filter_versions_by_specified_version(versions, cuda_version, |v| &v.accelerator);
-    println!("[+] Found {} versions", versions.len());
 
     versions.sort_by(|a, b| a.version.cmp(&b.version));
 
@@ -154,10 +150,16 @@ async fn build_docker_image(pytorch_version: &PyTorchVersion) {
 
         let tag = tags
             .iter()
-            .find(|t| {
+            .filter(|t| {
                 let tag = t["name"].as_str().unwrap().to_string();
 
                 tag.starts_with(&pytorch_version.get_accelerator_full_version()) && tag.contains("ubuntu")
+            })
+            .max_by(|a, b| {
+                let a_tag = a["name"].as_str().unwrap().to_string();
+                let b_tag = b["name"].as_str().unwrap().to_string();
+
+                a_tag.cmp(&b_tag)
             })
             .expect("No CUDA image found for version")["name"]
             .as_str()
