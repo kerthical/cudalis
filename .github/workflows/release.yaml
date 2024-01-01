@@ -48,7 +48,7 @@ jobs:
           git config --global user.name "kerthical"
         shell: bash
 
-      - run: cargo build --locked --release --target ${{ matrix.platform.target }}
+      - run: cargo build --release --target ${{ matrix.platform.target }}
         shell: bash
 
       - run: |
