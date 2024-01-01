@@ -153,7 +153,7 @@ async fn build_docker_image(pytorch_version: &PyTorchVersion) {
             .filter(|t| {
                 let tag = t["name"].as_str().unwrap().to_string();
 
-                tag.starts_with(&pytorch_version.get_accelerator_full_version()) && tag.contains("ubuntu")
+                tag.starts_with(&pytorch_version.get_accelerator_full_version()) && tag.contains("ubuntu") && tag.contains("devel")
             })
             .max_by(|a, b| {
                 let a_tag = a["name"].as_str().unwrap().to_string();
