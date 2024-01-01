@@ -1,4 +1,5 @@
 use std::env;
+use std::time::Duration;
 
 use bollard::container::{Config, CreateContainerOptions, ListContainersOptions, LogOutput, RemoveContainerOptions, StartContainerOptions};
 use bollard::exec::{CreateExecOptions, StartExecOptions, StartExecResults};
@@ -119,11 +120,16 @@ async fn get_pytorch_version() -> Option<PyTorchVersion> {
 
     versions.sort_by(|a, b| a.version.cmp(&b.version));
 
+    if versions.is_empty() {
+        panic!("No versions found with the specified constraints");
+    }
+
     versions.last().cloned()
 }
 
 async fn build_docker_image(pytorch_version: &PyTorchVersion) {
-    let docker = Docker::connect_with_local_defaults().unwrap();
+    let mut docker = Docker::connect_with_local_defaults().unwrap();
+    docker.set_timeout(Duration::from_secs(3600));
     let base_image_tag = if pytorch_version.accelerator == "cpu" {
         "ubuntu:22.04".to_string()
     } else {
