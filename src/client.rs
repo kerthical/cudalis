@@ -131,6 +131,7 @@ impl DockerClient {
                     attach_stdout: Some(true),
                     attach_stderr: Some(true),
                     tty: Some(true),
+                    env: Some(vec!["DEBIAN_FRONTEND=noninteractive"]),
                     ..Default::default()
                 },
             )

@@ -106,7 +106,7 @@ async fn main() {
     client.execute_commands(
         "cudalis_setup",
         vec![
-            "echo 'export DEBIAN_FRONTEND=noninteractive' >> /etc/bash.bashrc",
+            "echo 'export DEBIAN_FRONTEND=noninteractive' >> ~/.bashrc",
             "echo 'deb https://ftp.udx.icscoe.jp/Linux/ubuntu bionic main universe' >> /etc/apt/sources.list",
             "echo 'deb https://ftp.udx.icscoe.jp/Linux/ubuntu bionic-security main universe' >> /etc/apt/sources.list",
             "echo 'deb https://ftp.udx.icscoe.jp/Linux/ubuntu bionic-updates main universe' >> /etc/apt/sources.list",
