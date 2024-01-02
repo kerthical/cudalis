@@ -244,25 +244,55 @@ async fn main() {
         ).await;
     }
 
-    execute_commands(
-        &docker,
-        "cudalis_setup",
-        vec![
-            "sed -i.bak -r 's@http://(jp\\.)?archive\\.ubuntu\\.com/ubuntu/?@https://ftp.udx.icscoe.jp/Linux/ubuntu/@g' /etc/apt/sources.list",
-            &format!(
-                "export DEBIAN_FRONTEND=noninteractive && apt update -y && apt upgrade -y && apt install -y python{}-full python{}-dev python{}-distutils python3-pip",
-                versions.get_python_semantic_version(),
-                versions.get_python_semantic_version(),
-                versions.get_python_semantic_version(),
-            ),
-            &format!(
-                "pip install torch=={} torchvision torchaudio -f https://download.pytorch.org/whl/{}",
-                versions.torch,
-                versions.href,
-            ),
-        ],
-        verbose,
-    ).await;
+    if versions.accelerator == "cpu" {
+        execute_commands(
+            &docker,
+            "cudalis_setup",
+            vec![
+                "sed -i.bak -r 's@http://(jp\\.)?archive\\.ubuntu\\.com/ubuntu/?@https://ftp.udx.icscoe.jp/Linux/ubuntu/@g' /etc/apt/sources.list",
+                                    "export DEBIAN_FRONTEND=noninteractive && apt update -y && apt upgrade -y && apt install -y wget build-essential libreadline-dev libncursesw5-dev libssl-dev libsqlite3-dev libgdbm-dev libbz2-dev liblzma-dev zlib1g-dev uuid-dev libffi-dev libdb-dev",
+                &format!(
+                    "wget https://www.python.org/ftp/python/{}/Python-{}.tgz",
+                    versions.get_python_semantic_version(),
+                    versions.get_python_semantic_version(),
+                ),
+                &format!(
+                    "tar xvf Python-{}.tgz",
+                    versions.python,
+                ),
+&format!(
+                    "cd Python-{} && ./configure --enable-optimizations && make -j 8 && make install",
+                    versions.python,
+                ),
+                &format!(
+                    "pip install torch=={} torchvision torchaudio -f https://download.pytorch.org/whl/{}",
+                    versions.torch,
+                    versions.accelerator,
+                ),
+            ],
+            verbose,
+        ).await;
+    } else {
+        execute_commands(
+            &docker,
+            "cudalis_setup",
+            vec![
+                "sed -i.bak -r 's@http://(jp\\.)?archive\\.ubuntu\\.com/ubuntu/?@https://ftp.udx.icscoe.jp/Linux/ubuntu/@g' /etc/apt/sources.list",
+                &format!(
+                    "export DEBIAN_FRONTEND=noninteractive && apt update -y && apt upgrade -y && apt install -y python{}-full python{}-dev python{}-distutils python3-pip",
+                    versions.get_python_semantic_version(),
+                    versions.get_python_semantic_version(),
+                    versions.get_python_semantic_version(),
+                ),
+                &format!(
+                    "pip install torch=={} torchvision torchaudio -f https://download.pytorch.org/whl/{}",
+                    versions.torch,
+                    versions.accelerator,
+                ),
+            ],
+            verbose,
+        ).await;
+    }
 
     let image_name = format!(
         "cudalis:{}-{}-{}",
