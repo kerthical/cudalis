@@ -250,12 +250,16 @@ async fn main() {
         vec![
             "sed -i.bak -r 's@http://(jp\\.)?archive\\.ubuntu\\.com/ubuntu/?@https://ftp.udx.icscoe.jp/Linux/ubuntu/@g' /etc/apt/sources.list",
             &format!(
-                "export DEBIAN_FRONTEND=noninteractive && apt update -y && apt upgrade -y && apt install -y python{} python{}-dev python{}-distutils",
+                "export DEBIAN_FRONTEND=noninteractive && apt update -y && apt upgrade -y && apt install -y python{}-full python{}-dev python{}-distutils python3-pip",
                 versions.get_python_semantic_version(),
                 versions.get_python_semantic_version(),
                 versions.get_python_semantic_version(),
             ),
-            "pip install torch=={} torchvision torchaudio -f https://download.pytorch.org/whl/{}",
+            &format!(
+                "pip install torch=={} torchvision torchaudio -f https://download.pytorch.org/whl/{}",
+                versions.torch,
+                versions.href,
+            ),
         ],
         verbose,
     ).await;
