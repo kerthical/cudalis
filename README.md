@@ -39,7 +39,7 @@ This command automatically creates a container with the specified version of Pyt
 environment. If you don't specify the version, it will use the latest supported version automatically.
 
 ```bash
-cudalis[.exe] [--python/-p <VERSION>] [--torch/-t <VERSION>] [--cuda/-c <VERSION>]
+cudalis[.exe] [--python/-p <VERSION>] [--torch/-t <VERSION>] [--cuda/-c <VERSION>] [--verbose/-v]
 ```
 
 # Examples
