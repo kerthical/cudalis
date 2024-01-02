@@ -117,8 +117,7 @@ async fn main() {
             "add-apt-repository -y ppa:deadsnakes/ppa",
             "apt update -y",
             &format!(
-                "apt install -y python{} python{}-dev python-{}-venv",
-                version.get_python_semantic_version(),
+                "apt install -y python{} python{}-dev",
                 version.get_python_semantic_version(),
                 version.get_python_semantic_version(),
             ),

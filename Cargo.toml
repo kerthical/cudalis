@@ -1,6 +1,6 @@
 [package]
 name = "cudalis"
-version = "0.0.8"
+version = "0.0.9"
 description = "Portable Python machine learning container build and run tool."
 authors = ["kerthical <121681466+kerthical@users.noreply.github.com>"]
 edition = "2021"
