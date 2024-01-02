@@ -113,7 +113,7 @@ async fn main() {
             "sed -i.bak -r 's@http://(jp\\.)?archive\\.ubuntu\\.com/ubuntu/?@https://ftp.udx.icscoe.jp/Linux/ubuntu/@g' /etc/apt/sources.list",
             "apt update -y",
             "apt upgrade -y",
-            "apt install -y --allow-downgrades git software-properties-common packagekit policykit-1 libpam-systemd systemd systemd-sysv libsystemd0=245.4-4ubuntu3.21 networkd-dispatcher",
+            "apt install -y --allow-downgrades git software-properties-common packagekit policykit-1 libpam-systemd systemd systemd-sysv libsystemd0=245.4-4ubuntu3.21 networkd-dispatcher python3-pip",
             "add-apt-repository -y ppa:deadsnakes/ppa",
             "apt update -y",
             &format!(
