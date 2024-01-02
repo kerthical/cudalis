@@ -117,7 +117,9 @@ async fn main() {
             "add-apt-repository -y ppa:deadsnakes/ppa",
             "apt update -y",
             &format!(
-                "apt install -y python{}-full",
+                "apt install -y python{}-full python{}-dev python{}-distutils",
+                version.get_python_semantic_version(),
+                version.get_python_semantic_version(),
                 version.get_python_semantic_version(),
             ),
             "apt autoremove -y",
